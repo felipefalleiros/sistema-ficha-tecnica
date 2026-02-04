@@ -14,7 +14,17 @@ venv/
 *.sqlite
 *.sqlite3
 
+# Logs
+*.log
+
+# Build files
+build/
+dist/
+*.egg-info/
+
 # OS files
 .DS_Store
 Thumbs.db
+
+# VS Code
 .vscode/
