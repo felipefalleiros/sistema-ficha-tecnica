@@ -16,7 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
+from core.views import home_view
+from insumos.views import insumo_view, new_insumo_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-]
+    path('', home_view, name='home'),
+    path('insumos/', insumo_view, name='listar_insumos'),
+    path('cadastrar_insumos/', new_insumo_view, name='cadastrar_insumos'),
+]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -1,3 +1,13 @@
-{% extends 'gastrolab/templates/base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Cadastro de Insumos{%  endblock %}
+
+{% block content %}
+<form method="POST">
+    {% csrf_token %}
+    <table>
+        {{new_insumo_form.as_table}}
+    </table>
+    <input type="submit" value="Cadastrar">
+</form>
+{% endblock %}
