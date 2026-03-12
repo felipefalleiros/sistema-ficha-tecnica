@@ -1,110 +1,70 @@
 from django.db import models
+from django.utils import timezone
 
-# Create your models here.
+
 class Insumo(models.Model):
-    PESO = 'P'
-    UNIDADE = 'U'
-    
-    TIPO_MEDIDA_CHOICE = [(PESO, 'Peso (gramas)'), (UNIDADE, 'Unidade')]
-    
-    nome = models.CharField(
-        max_length=120,
-        unique=True
-    )
-    
-    tipo_medida = models.CharField(
-        max_length=1,
-        choices=TIPO_MEDIDA_CHOICE
-    )
-    
-    quantidade_base = models.DecimalField(
-        max_digits=10,
-        decimal_places=3, 
-        help_text='Quantidade descrita na embalagem (g ou und)'
-        )
-    
-    valor = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        help_text='Valor do produto'
-    )
-    
-    custo_unitario = models.DecimalField(
-        max_digits=10,
-        decimal_places=6,
-        editable=False
-    )
-    
-    ativo = models.BooleanField(
-        default=True
-    )
-    
-    data_criacao = models.DateTimeField(
-        auto_now_add=True
-    )
-    
-    data_atualizacao = models.DateTimeField(
-        auto_now_add=True
-    )
-    
-    class Meta:
-        ordering = ['nome']
-        verbose_name = 'Insumo'
-        verbose_name_plural = 'Insumos'
-        
+    UNIDADE = "unidade"
+    GRAMA = "g"
+    UNIDADE_CHOICES = [(UNIDADE, "Unidade"), (GRAMA, "Grama")]
+
+    nome = models.CharField(max_length=255)
+    quantidade_embalagem = models.DecimalField(max_digits=10, decimal_places=3)
+    preco = models.DecimalField(max_digits=10, decimal_places=2)
+    unidade_medida = models.CharField(max_length=10, choices=UNIDADE_CHOICES)
+    custo_unitario = models.DecimalField(max_digits=10, decimal_places=5, editable=False)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+    data_atualizacao = models.DateTimeField(auto_now=True)
+
     def save(self, *args, **kwargs):
-        # Ao salvar os dados calcula o custo unitario internamente
-        if self.quantidade_base and self.valor:
-            self.custo_unitario = self.valor / self.quantidade_base
-        super().save(*args, **kwargs)
+        is_new = not self.pk  # Se pk = True então é uma atualizacao se não é uma criacao
         
-class HistoricoInsumo(models.Model):
-    insumo = models.ForeignKey(
-        'Insumo',
-        on_delete=models.CASCADE,
-        related_name='historicos'
-    )
+        if not is_new:
+            original = Insumo.objects.get(pk=self.pk)
+            InsumoHistorico.objects.create(
+                insumo=original,
+                quantidade_embalagem=original.quantidade_embalagem,
+                preco=original.preco,
+                unidade_medida=original.unidade_medida,
+                preco_por_unidade=original.preco_por_unidade,
+                tipo=InsumoHistorico.ALTERACAO,
+            )
 
-    # Dados financeiros no momento do registro
-    valor = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        help_text='Valor pago pelo insumo na data'
-    )
+        if self.quantidade_embalagem:
+            self.preco_por_unidade = self.preco / self.quantidade_embalagem
 
-    quantidade_base = models.DecimalField(
-        max_digits=10,
-        decimal_places=3,
-        help_text='Quantidade base do insumo (ex: gramas ou unidades)'
-    )
+        super().save(*args, **kwargs)
 
-    custo_unitario = models.DecimalField(
-        max_digits=12,
-        decimal_places=6,
-        help_text='Custo por grama ou por unidade'
-    )
-
-    data_referencia = models.DateTimeField(
-        auto_now_add=True
-    )
-
-    motivo = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text='Ex: reajuste fornecedor, troca de marca, correção'
-    )
-
-    observacao = models.TextField(
-        blank=True
-    )
-
-    class Meta:
-        verbose_name = 'Histórico de Insumo'
-        verbose_name_plural = 'Histórico de Insumos'
-        ordering = ['-data_referencia']
-        indexes = [
-            models.Index(fields=['insumo', 'data_referencia']),
-        ]
+        if is_new:
+            InsumoHistorico.objects.create(
+                insumo=self,
+                quantidade_embalagem=self.quantidade_embalagem,
+                preco=self.preco,
+                unidade_medida=self.unidade_medida,
+                preco_por_unidade=self.preco_por_unidade,
+                tipo=InsumoHistorico.CRIACAO,
+            )
 
     def __str__(self):
-        return f'{self.insumo.nome} - {self.data_referencia:%d/%m/%Y}'
+        return self.nome
+
+    class Meta:
+        verbose_name = "Insumo"
+        verbose_name_plural = "Insumos"
+
+
+class InsumoHistorico(models.Model):
+    CRIACAO = "criacao"
+    ALTERACAO = "alteracao"
+    TIPO_CHOICES = [(CRIACAO, "Criação"), (ALTERACAO, "Alteração")]
+
+    insumo = models.ForeignKey(Insumo, on_delete=models.CASCADE, related_name="historico")
+    quantidade_embalagem = models.DecimalField(max_digits=10, decimal_places=3)
+    preco = models.DecimalField(max_digits=10, decimal_places=2)
+    unidade_medida = models.CharField(max_length=10)
+    preco_por_unidade = models.DecimalField(max_digits=10, decimal_places=5)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    data_atualizacao = models.DateTimeField(default=timezone.now)
+    class Meta:
+        ordering = ["-data_atualizacao"] # - significa ordem decrescente
+        verbose_name = "Histórico de insumo"
+
