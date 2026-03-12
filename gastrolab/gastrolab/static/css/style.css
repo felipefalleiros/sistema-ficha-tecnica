@@ -2,10 +2,10 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-}
+} */
 
 body{
-    background-color: #561013;
+    background-color: white;
 }
 
 a {
@@ -20,9 +20,9 @@ a {
 }
 
 .menu-itens{
-    color: white;
+    color: black;
     padding: 10px;
-    border: 1px solid white;
+    border: 1px solid black;
     border-radius: 8px;
 }
 
