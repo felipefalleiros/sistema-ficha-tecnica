@@ -9,7 +9,8 @@
 </head>
 <body>
     <nav class="menu">
-        <a class="menu-itens" href="#"><ul>Insumos</ul></a>
+        <a class="menu-itens" href="{% url 'home' %}"><ul>Home</ul></a>
+        <a class="menu-itens" href="{% url 'cadastrar_insumos' %}"><ul>Insumos</ul></a>
         <a class="menu-itens" href="#"><ul>Fichas Técnicas</ul></a>
     </nav>
     {% block content %}
