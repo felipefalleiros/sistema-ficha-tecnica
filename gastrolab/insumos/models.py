@@ -9,7 +9,7 @@ class Insumo(models.Model):
 
     nome = models.CharField(max_length=255)
     quantidade_embalagem = models.DecimalField(max_digits=10, decimal_places=3)
-    preco = models.DecimalField(max_digits=10, decimal_places=2)
+    preco_custo = models.DecimalField(max_digits=10, decimal_places=2)
     unidade_medida = models.CharField(max_length=10, choices=UNIDADE_CHOICES)
     custo_unitario = models.DecimalField(max_digits=10, decimal_places=5, editable=False)
     data_criacao = models.DateTimeField(auto_now_add=True)
@@ -23,14 +23,14 @@ class Insumo(models.Model):
             InsumoHistorico.objects.create(
                 insumo=original,
                 quantidade_embalagem=original.quantidade_embalagem,
-                preco=original.preco,
+                preco_custo=original.preco_custo,
                 unidade_medida=original.unidade_medida,
-                preco_por_unidade=original.preco_por_unidade,
+                custo_unitario=original.custo_unitario,
                 tipo=InsumoHistorico.ALTERACAO,
             )
 
         if self.quantidade_embalagem:
-            self.preco_por_unidade = self.preco / self.quantidade_embalagem
+            self.custo_unitario = self.preco_custo / self.quantidade_embalagem
 
         super().save(*args, **kwargs)
 
@@ -38,9 +38,9 @@ class Insumo(models.Model):
             InsumoHistorico.objects.create(
                 insumo=self,
                 quantidade_embalagem=self.quantidade_embalagem,
-                preco=self.preco,
+                preco_custo=self.preco_custo,
                 unidade_medida=self.unidade_medida,
-                preco_por_unidade=self.preco_por_unidade,
+                custo_unitario=self.custo_unitario,
                 tipo=InsumoHistorico.CRIACAO,
             )
 
@@ -59,9 +59,9 @@ class InsumoHistorico(models.Model):
 
     insumo = models.ForeignKey(Insumo, on_delete=models.CASCADE, related_name="historico")
     quantidade_embalagem = models.DecimalField(max_digits=10, decimal_places=3)
-    preco = models.DecimalField(max_digits=10, decimal_places=2)
+    preco_custo = models.DecimalField(max_digits=10, decimal_places=2)
     unidade_medida = models.CharField(max_length=10)
-    preco_por_unidade = models.DecimalField(max_digits=10, decimal_places=5)
+    custo_unitario = models.DecimalField(max_digits=10, decimal_places=5)
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
     data_atualizacao = models.DateTimeField(default=timezone.now)
     class Meta:
